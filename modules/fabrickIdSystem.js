@@ -55,28 +55,34 @@ export const fabrickIdSubmodule = {
         let keysArr = Object.keys(configParams);
         for (let i in keysArr) {
           let k = keysArr[i];
-          if (k === 'url' || k === 'refererInfo') {
+          if (k === 'url' || k === 'refererInfo' || k === 'maxRefLen') {
             continue;
           }
           let v = configParams[k];
           if (Array.isArray(v)) {
             for (let j in v) {
-              url += `${k}=${v[j]}&`;
+              if (typeof v[j] === 'string' || typeof v[j] === 'number') {
+                url += `${k}=${v[j]}&`;
+              }
             }
-          } else {
-            url += `${k}=${v}&`;
+          } else if (typeof v === 'string' || typeof v === 'number') {
+              url += `${k}=${v}&`;
           }
         }
         // pull off the trailing &
         url = url.slice(0, -1)
         const referer = _getRefererInfo(configParams);
-        const urls = new Set();
-        url = truncateAndAppend(urls, url, 'r', referer.referer);
+        const refs = new Map();
+        setReferrer(refs, referer.referer);
         if (referer.stack && referer.stack[0]) {
-          url = truncateAndAppend(urls, url, 'r', referer.stack[0]);
+          setReferrer(refs, referer.stack[0]);
         }
-        url = truncateAndAppend(urls, url, 'r', referer.canonicalUrl);
-        url = truncateAndAppend(urls, url, 'r', window.location.href);
+        setReferrer(refs, referer.canonicalUrl);
+        setReferrer(refs, window.location.href);
+
+        for (let value of refs.values()) {
+          url = appendURL(url, 'r', value, configParams);
+        }
 
         const resp = function (callback) {
           const callbacks = {
@@ -130,18 +136,42 @@ function _getBaseUrl(configParams) {
   }
 }
 
-function truncateAndAppend(urls, url, paramName, s) {
-  if (s && url.length < 2000) {
-    if (s.length > 200) {
-      s = s.substring(0, 200);
-    }
-    // Don't send the same url in multiple params
-    if (!urls.has(s)) {
-      urls.add(s);
-      return `${url}&${paramName}=${s}`
+function setReferrer(refs, s) {
+  if (s) {
+    // store the longest one for the same URI
+    const url = s.split('?')[0];
+    // OR store the longest one for the same domain
+    // const url = s.split('?')[0].replace('http://','').replace('https://', '').split('/')[0];
+    if (refs.has(url)) {
+      const prevRef = refs.get(url);
+      if (s.length > prevRef.length) {
+        refs.set(url, s);
+      }
+    } else {
+      refs.set(url, s);
     }
   }
-  return url;
+}
+
+function appendURL(url, paramName, s, configParams) {
+  let maxUrlLen = 2000;
+  let maxRefLen = (configParams && configParams.maxRefLen) || 1000;
+  if (s && url.length < maxUrlLen) {
+    if (s.length > maxRefLen) {
+      s = s.substring(0, maxRefLen);
+    }
+
+    if (s.charAt(s.length - 1) === '%') {
+      s = s.substring(0, maxRefLen - 1);
+    } else {
+      if (s.charAt(s.length - 2) === '%') {
+        s = s.substring(0, maxRefLen - 2);
+      }
+    }
+    return `${url}&${paramName}=${encodeURIComponent(s)}`
+  } else {
+    return url;
+  }
 }
 
 submodule('userId', fabrickIdSubmodule);

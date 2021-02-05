@@ -48,7 +48,7 @@ describe('Fabrick ID System', function() {
 
   it('should truncate the params', function() {
     let r = '';
-    for (let i = 0; i < 300; i++) {
+    for (let i = 0; i < 1500; i++) {
       r += 'r';
     }
     let configParams = Object.assign({}, defaultConfigParams, {
@@ -66,7 +66,7 @@ describe('Fabrick ID System', function() {
     submoduleCallback(callBackSpy);
     let request = server.requests[0];
     r = '';
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 1000; i++) {
       r += 'r';
     }
     expect(request.url).to.match(new RegExp(`r=${r}&r=`));
@@ -80,12 +80,16 @@ describe('Fabrick ID System', function() {
   });
 
   it('should complete successfully', function() {
+    let urlWithoutQueryString = 'https://shareably.net/50-trucos-telefonos/';
+    let truncatedUrlWithQueryString = `${urlWithoutQueryString}?utm_source=fb_ads&utm_medium=facebook&utm_campaign=a114a820-cd13-45be-8c62-aee8478782bd&fbclid=IwAR0sSxu-bbcpojGhuGbeGKRGQmBJH0Td1907C0pNvMPBw8EDgjE-JuTGCbQ`;
+    let fullUrlWithQueryString = `${truncatedUrlWithQueryString}%3D`;
     let configParams = Object.assign({}, defaultConfigParams, {
       refererInfo: {
-        referer: 'r-0',
-        stack: ['s-0'],
+        referer: fullUrlWithQueryString,
+        stack: [urlWithoutQueryString],
         canonicalUrl: 'cu-0'
-      }
+      },
+      maxRefLen: 200
     });
     let submoduleCallback = fabrickIdSubmodule.getId({
       name: 'fabrickId',
@@ -94,7 +98,9 @@ describe('Fabrick ID System', function() {
     let callBackSpy = sinon.spy();
     submoduleCallback(callBackSpy);
     let request = server.requests[0];
-    expect(request.url).to.match(/r=r-0&r=s-0&r=cu-0&r=http/);
+    expect(request.url).to.match(new RegExp(`r=${encodeURIComponent(truncatedUrlWithQueryString)}&r=cu-0&r=http`));
+    // ensure the stack url isn't included since it's a duplicate
+    expect(request.url.length).to.be.lt(365);
     request.respond(
       200,
       responseHeader,
