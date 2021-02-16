@@ -1,0 +1,90 @@
+<!-- copied from web_example.html and modified accordingly for fabrick -->
+<html>
+
+<head>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <!--
+  <script async src="//www.googletagservices.com/tag/js/gpt.js"></script>
+  <script async src="//acdn.adnxs.com/prebid/not-for-prod/prebid.js"></script>
+  -->
+  <script async src="/build/dev/prebid.js"></script>
+  <script>
+    var PREBID_TIMEOUT = 10000;
+    var FAILSAFE_TIMEOUT = 30000;
+
+    var pbjs = pbjs || {};
+    pbjs.que = pbjs.que || [];
+
+    var div_1_sizes = [
+      [300, 250],
+      [300, 600]
+    ];
+    var adUnits = [
+      {
+        code: '/19968336/header-bid-tag-0',
+        mediaTypes: {
+          banner: {
+            sizes: div_1_sizes
+          }
+        }
+        ,bids: [{
+          //bidder: 'appnexus',
+          bidder: 'nobid',
+          params: {
+            placementId: 13144370
+          }
+        }]
+        /*
+         */
+      }
+   ]
+
+    pbjs.que.push(function() {
+      pbjs.addAdUnits(adUnits);
+      pbjs.setConfig({
+        userSync: {
+          userIds: [
+            {
+              // This supplies it straight - no remote call
+              name: "unifiedId",
+              value: {"tdid": "D6885E90-2A7A-4E0F-87CB-7734ED1B99A3"}
+            }, {
+              name: "fabrickId",
+              params: {
+                apiKey: '789',
+                url: "http://localhost:9999/test/mocks/fabrickId.json?",
+                e: 'abc',
+                p: ['def', 'hij'],
+                refererInfo: {
+                  referer: 'r'.repeat(300),
+                  stack: ['s-0'],
+                  canonicalUrl: 'cu-0'
+                }
+              },
+              storage: {
+                type: "cookie",
+                name: "pbjs-fabrickId",       // create a cookie with this name
+                expires: 7                    // cookie can last for x days
+              }
+            }
+          ]}
+      });
+      pbjs.requestBids({
+        timeout: PREBID_TIMEOUT
+      });
+      /*
+       */
+      console.log('pbjs.getUserIds()');
+      console.log(pbjs.getUserIds());
+    });
+
+  </script>
+
+</head>
+
+<body>
+<h2>Basic Prebid.js Example</h2>
+
+<script src="//localhost:35729/livereload.js?snipver=1" async="" defer=""></script></body>
+
+</html>
