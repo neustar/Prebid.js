@@ -1,36 +1,34 @@
 import * as utils from '../../../src/utils.js';
 import {server} from '../../mocks/xhr.js';
 
-import * as fabrickIdSystem from 'modules/fabrickIdSystem.js';
+import {fabrickIdSubmodule, appendUrl} from 'modules/fabrickIdSystem.js';
 
 const defaultConfigParams = {
   apiKey: '123',
   e: 'abc',
   p: ['def', 'hij'],
-  url: 'http://localhost:9999/test/mocks/fabrickId.json?',
-  f: () => 'ignore this'
+  url: 'http://localhost:9999/test/mocks/fabrickId.json?'
 };
 const responseHeader = {'Content-Type': 'application/json'}
-const fabrickIdSubmodule = fabrickIdSystem.fabrickIdSubmodule;
 
 describe('Fabrick ID System', function() {
   let logErrorStub;
 
   beforeEach(function () {
-    logErrorStub = sinon.stub(utils, 'logError');
   });
 
   afterEach(function () {
-    logErrorStub.restore();
-    fabrickIdSubmodule.getRefererInfoOverride = null;
   });
 
   it('should log an error if no configParams were passed into getId', function () {
+    logErrorStub = sinon.stub(utils, 'logError');
     fabrickIdSubmodule.getId();
     expect(logErrorStub.calledOnce).to.be.true;
+    logErrorStub.restore();
   });
 
   it('should error on json parsing', function() {
+    logErrorStub = sinon.stub(utils, 'logError');
     let submoduleCallback = fabrickIdSubmodule.getId({
       name: 'fabrickId',
       params: defaultConfigParams
@@ -45,6 +43,7 @@ describe('Fabrick ID System', function() {
     );
     expect(callBackSpy.calledOnce).to.be.true;
     expect(logErrorStub.calledOnce).to.be.true;
+    logErrorStub.restore();
   });
 
   it('should truncate the params', function() {
@@ -77,7 +76,6 @@ describe('Fabrick ID System', function() {
       JSON.stringify({})
     );
     expect(callBackSpy.calledOnce).to.be.true;
-    expect(logErrorStub.calledOnce).to.be.false;
   });
 
   it('should complete successfully', function() {
@@ -102,7 +100,6 @@ describe('Fabrick ID System', function() {
       JSON.stringify({})
     );
     expect(callBackSpy.calledOnce).to.be.true;
-    expect(logErrorStub.calledOnce).to.be.false;
   });
 
   it('should truncate 2', function() {
@@ -112,26 +109,26 @@ describe('Fabrick ID System', function() {
       maxSpaceAvailable: 2
     };
 
-    let url = fabrickIdSystem.appendURL('', 'r', '123', configParams);
+    let url = appendUrl('', 'r', '123', configParams);
     expect(url).to.equal('&r=12');
 
-    url = fabrickIdSystem.appendURL('12345', 'r', '678', configParams);
+    url = appendUrl('12345', 'r', '678', configParams);
     expect(url).to.equal('12345&r=67');
 
-    url = fabrickIdSystem.appendURL('12345678', 'r', '9', configParams);
+    url = appendUrl('12345678', 'r', '9', configParams);
     expect(url).to.equal('12345678');
 
     configParams.maxRefLen = 8;
-    url = fabrickIdSystem.appendURL('', 'r', '1234&', configParams);
+    url = appendUrl('', 'r', '1234&', configParams);
     expect(url).to.equal('&r=1234');
 
-    url = fabrickIdSystem.appendURL('', 'r', '123&', configParams);
+    url = appendUrl('', 'r', '123&', configParams);
     expect(url).to.equal('&r=123');
 
-    url = fabrickIdSystem.appendURL('', 'r', '12&', configParams);
+    url = appendUrl('', 'r', '12&', configParams);
     expect(url).to.equal('&r=12%26');
 
-    url = fabrickIdSystem.appendURL('', 'r', '1&&', configParams);
+    url = appendUrl('', 'r', '1&&', configParams);
     expect(url).to.equal('&r=1%26');
   });
 });

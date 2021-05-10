@@ -46,7 +46,7 @@ export const fabrickIdSubmodule = {
       if (window.fabrickMod1) {
         window.fabrickMod1(configParams, consentData, cacheIdObj);
       }
-      if (!configParams || typeof configParams.apiKey !== 'string') {
+      if (!configParams || !configParams.apiKey || typeof configParams.apiKey !== 'string') {
         utils.logError('fabrick submodule requires an apiKey.');
         return;
       }
@@ -55,7 +55,7 @@ export const fabrickIdSubmodule = {
         let keysArr = Object.keys(configParams);
         for (let i in keysArr) {
           let k = keysArr[i];
-          if (k === 'url' || k === 'refererInfo' || k.startsWith('max')) {
+          if (k === 'url' || k === 'refererInfo' || (k.length > 3 && k.substring(0, 3) === 'max')) {
             continue;
           }
           let v = configParams[k];
@@ -73,16 +73,16 @@ export const fabrickIdSubmodule = {
         url = url.slice(0, -1)
         const referer = _getRefererInfo(configParams);
         const refs = new Map();
-        setReferrer(refs, referer.referer);
+        _setReferrer(refs, referer.referer);
         if (referer.stack && referer.stack[0]) {
-          setReferrer(refs, referer.stack[0]);
+          _setReferrer(refs, referer.stack[0]);
         }
-        setReferrer(refs, referer.canonicalUrl);
-        setReferrer(refs, window.location.href);
+        _setReferrer(refs, referer.canonicalUrl);
+        _setReferrer(refs, window.location.href);
 
-        for (let value of refs.values()) {
-          url = appendURL(url, 'r', value, configParams);
-        }
+        refs.forEach(v => {
+          url = appendUrl(url, 'r', v, configParams);
+        });
 
         const resp = function (callback) {
           const callbacks = {
@@ -136,7 +136,7 @@ function _getBaseUrl(configParams) {
   }
 }
 
-function setReferrer(refs, s) {
+function _setReferrer(refs, s) {
   if (s) {
     // store the longest one for the same URI
     const url = s.split('?')[0];
@@ -153,8 +153,7 @@ function setReferrer(refs, s) {
   }
 }
 
-// export function appendURL(url, paramName, s, configParams) {
-function appendURL(url, paramName, s, configParams) {
+export function appendUrl(url, paramName, s, configParams) {
   const maxUrlLen = (configParams && configParams.maxUrlLen) || 2000;
   const maxRefLen = (configParams && configParams.maxRefLen) || 1000;
   const maxSpaceAvailable = (configParams && configParams.maxSpaceAvailable) || 50;

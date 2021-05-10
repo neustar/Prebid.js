@@ -4,13 +4,13 @@ for d in $(echo 'test/spec/modules modules')
 do 
     echo $d
     mkdir -p bak/${d} 2> /dev/null
-    for f in $(find $d -type f | grep -v git | grep -v build | grep -i '\(neustar\|fabrick\|appnexusBidAdapter\|pubm\|unifiedIdSystem\|s2sTesting\)')
+    for f in $(find $d -type f | grep -v git | grep -v build | grep -i '\(neustar\|fabrick\|appnexusBidAdapter\|pubm\|unifiedIdSystem\|s2sTesting\|currency\|eids\|userId\)')
     do
         echo $f
         cp $f bak/$d
     done
-    rm -fR $d/*
-done 
+    # rm -fR $d/*
+done
 
 cd bak
 for f in $(find . -type f)
